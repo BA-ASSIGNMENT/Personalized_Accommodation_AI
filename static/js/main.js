@@ -1,255 +1,280 @@
-// Main JavaScript for VUT Accommodation AI
+// Main JavaScript file for VUT Accommodation Platform
 
-// Budget slider functionality
-const budgetSlider = document.getElementById('budget');
-const budgetValue = document.getElementById('budgetValue');
-
-if (budgetSlider && budgetValue) {
-    budgetSlider.addEventListener('input', function() {
-        const value = parseInt(this.value);
-        const formattedValue = 'R' + value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        budgetValue.textContent = formattedValue;
-    });
-}
-
-// Priority buttons functionality
-const priorityBtns = document.querySelectorAll('.priority-btn');
-priorityBtns.forEach(btn => {
-    btn.addEventListener('click', function(e) {
-        e.preventDefault();
-        // Remove active class from all buttons in the group
-        const parent = this.parentElement;
-        parent.querySelectorAll('.priority-btn').forEach(b => {
-            b.classList.remove('active');
-        });
-        
-        // Add active class to clicked button
-        this.classList.add('active');
-    });
-});
-
-// Amenity selection functionality
-const amenityItems = document.querySelectorAll('.amenity-item');
-amenityItems.forEach(item => {
-    item.addEventListener('click', function() {
-        this.classList.toggle('selected');
-    });
-});
-
-// Compact view toggle
-const compactToggle = document.getElementById('compactToggle');
-const searchSection = document.querySelector('.search-section');
-
-if (compactToggle && searchSection) {
-    compactToggle.addEventListener('click', function() {
-        searchSection.classList.toggle('compact');
-        
-        if (searchSection.classList.contains('compact')) {
-            this.innerHTML = '<i class="fas fa-expand"></i> Full View';
-        } else {
-            this.innerHTML = '<i class="fas fa-compress"></i> Compact View';
-        }
-    });
-}
-
-// Form submission
-const searchForm = document.getElementById('searchForm');
-if (searchForm) {
-    searchForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        // Get form data
-        const formData = new FormData(this);
-        const searchData = {
-            campus: formData.get('campus') || document.getElementById('campus')?.value,
-            accommodationType: formData.get('accommodation-type') || document.getElementById('accommodation-type')?.value,
-            roomType: document.querySelector('.priority-btn.active[data-value]')?.dataset.value,
-            budget: document.getElementById('budget')?.value,
-            safetyPriority: document.querySelector('[data-value="high"], [data-value="medium"], [data-value="low"]')?.dataset.value,
-            distancePriority: document.querySelector('[data-value="close"], [data-value="moderate"], [data-value="flexible"]')?.dataset.value,
-            amenities: Array.from(document.querySelectorAll('.amenity-item.selected')).map(item => item.dataset.amenity)
-        };
-        
-        // Show loading state
-        const submitBtn = document.querySelector('.btn-submit');
-        const originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating Recommendations...';
-        submitBtn.disabled = true;
-        
-        // Simulate API call (replace with actual API call)
-        setTimeout(() => {
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-            
-            // Display results or redirect
-            console.log('Search data:', searchData);
-            displaySearchResults(searchData);
-        }, 2000);
-    });
-}
-
-// Pagination button functionality
-const paginationBtns = document.querySelectorAll('.pagination-btn');
-paginationBtns.forEach(btn => {
-    btn.addEventListener('click', function() {
-        if (!this.textContent.includes('Next')) {
-            paginationBtns.forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-        }
-    });
-});
-
-// Hero search functionality
-const heroSearchBtn = document.querySelector('.hero-search button');
-const heroSearchInput = document.querySelector('.hero-search input');
-
-if (heroSearchBtn && heroSearchInput) {
-    heroSearchBtn.addEventListener('click', function() {
-        const query = heroSearchInput.value.trim();
-        if (query) {
-            performQuickSearch(query);
-        }
-    });
+// Toggle filter section
+function toggleFilters() {
+    const content = document.getElementById('filterContent');
+    const toggle = document.getElementById('filterToggle');
     
-    heroSearchInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            const query = this.value.trim();
-            if (query) {
-                performQuickSearch(query);
-            }
-        }
-    });
+    content.classList.toggle('expanded');
+    toggle.classList.toggle('expanded');
 }
 
-// Filter button functionality
-const filterBtn = document.querySelector('.filter-btn');
-if (filterBtn) {
-    filterBtn.addEventListener('click', function() {
-        // Scroll to search section
-        const searchSection = document.querySelector('.search-section');
-        if (searchSection) {
-            searchSection.scrollIntoView({ behavior: 'smooth' });
-        }
-    });
-}
-
-// Initialize budget display on page load
-document.addEventListener('DOMContentLoaded', function() {
-    const budgetSlider = document.getElementById('budget');
-    const budgetValue = document.getElementById('budgetValue');
+// Handle priority button clicks
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('priority-btn')) {
+        const group = e.target.parentElement;
+        group.querySelectorAll('.priority-btn').forEach(btn => btn.classList.remove('active'));
+        e.target.classList.add('active');
+    }
     
-    if (budgetSlider && budgetValue) {
-        const value = parseInt(budgetSlider.value);
-        const formattedValue = 'R' + value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        budgetValue.textContent = formattedValue;
+    if (e.target.classList.contains('amenity-item')) {
+        e.target.classList.toggle('selected');
     }
 });
 
-// Helper functions
-function performQuickSearch(query) {
-    console.log('Quick search for:', query);
-    // Implement quick search logic here
-    // Could filter existing results or make API call
-    
-    // Show loading indicator
-    const resultsSection = document.querySelector('.results-section');
-    if (resultsSection) {
-        resultsSection.scrollIntoView({ behavior: 'smooth' });
-    }
+// Clear all filters
+function clearFilters() {
+    document.getElementById('searchForm').reset();
+    document.querySelectorAll('.priority-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.priority-btn[data-value="shared"], .priority-btn[data-value="medium"], .priority-btn[data-value="close"]')
+        .forEach(btn => btn.classList.add('active'));
+    document.querySelectorAll('.amenity-item').forEach(item => item.classList.remove('selected'));
+    document.getElementById('heroSearch').value = '';
 }
 
-function displaySearchResults(searchData) {
-    // This function would handle displaying search results
-    // In a real application, this would make an API call and update the DOM
-    console.log('Displaying results for:', searchData);
+// Basic form handlers (ready for backend integration)
+document.getElementById('searchForm').addEventListener('submit', function(e) {
+    e.preventDefault();
     
-    // Show success message
-    showNotification('AI recommendations generated successfully!', 'success');
+    // Get form data
+    const formData = new FormData(this);
+    const searchData = Object.fromEntries(formData.entries());
     
-    // Scroll to results
-    const resultsSection = document.querySelector('.results-section');
-    if (resultsSection) {
-        resultsSection.scrollIntoView({ behavior: 'smooth' });
-    }
-}
-
-function showNotification(message, type = 'info') {
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    notification.textContent = message;
+    // Get selected amenities
+    const selectedAmenities = Array.from(document.querySelectorAll('.amenity-item.selected'))
+        .map(item => item.dataset.amenity);
     
-    // Style the notification
-    Object.assign(notification.style, {
-        position: 'fixed',
-        top: '20px',
-        right: '20px',
-        background: type === 'success' ? '#28a745' : '#17a2b8',
-        color: 'white',
-        padding: '12px 24px',
-        borderRadius: '8px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-        zIndex: '9999',
-        transform: 'translateX(400px)',
-        transition: 'transform 0.3s ease'
+    // Get priority selections
+    const priorities = {};
+    document.querySelectorAll('.priority-selector').forEach((selector, index) => {
+        const activeBtn = selector.querySelector('.priority-btn.active');
+        if (activeBtn) {
+            const labels = ['roomType', 'safetyPriority', 'distancePriority'];
+            priorities[labels[index]] = activeBtn.dataset.value;
+        }
     });
     
-    document.body.appendChild(notification);
+    // Combine all search parameters
+    const searchParams = {
+        ...searchData,
+        amenities: selectedAmenities,
+        priorities: priorities,
+        heroSearch: document.getElementById('heroSearch').value
+    };
     
-    // Animate in
+    console.log('Search parameters:', searchParams);
+    
+    // Here you would typically send this data to your backend API
+    // Example: sendSearchRequest(searchParams);
+    
+    // Show a temporary message
+    showSearchMessage();
+});
+
+function performHeroSearch() {
+    const query = document.getElementById('heroSearch').value;
+    console.log('Hero search:', query);
+    
+    if (query.trim()) {
+        // Trigger the main search form
+        document.getElementById('searchForm').dispatchEvent(new Event('submit'));
+    }
+}
+
+function showSearchMessage() {
+    const resultsCounter = document.getElementById('resultsCounter');
+    const originalText = resultsCounter.textContent;
+    
+    resultsCounter.textContent = 'Search functionality ready for backend integration...';
+    resultsCounter.style.color = 'var(--primary)';
+    
     setTimeout(() => {
-        notification.style.transform = 'translateX(0)';
-    }, 100);
-    
-    // Remove after 3 seconds
-    setTimeout(() => {
-        notification.style.transform = 'translateX(400px)';
-        setTimeout(() => {
-            document.body.removeChild(notification);
-        }, 300);
+        resultsCounter.textContent = originalText;
+        resultsCounter.style.color = '';
     }, 3000);
 }
 
-// Smooth scrolling for anchor links
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-            target.scrollIntoView({
-                behavior: 'smooth'
+// Handle view toggle buttons
+document.querySelectorAll('.view-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        
+        const view = this.dataset.view;
+        const resultsGrid = document.getElementById('resultsGrid');
+        
+        if (view === 'list') {
+            resultsGrid.style.gridTemplateColumns = '1fr';
+            resultsGrid.querySelectorAll('.accommodation-card').forEach(card => {
+                card.style.display = 'flex';
+                card.style.flexDirection = 'row';
+            });
+        } else {
+            resultsGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(300px, 1fr))';
+            resultsGrid.querySelectorAll('.accommodation-card').forEach(card => {
+                card.style.display = 'block';
+                card.style.flexDirection = '';
             });
         }
     });
 });
 
-// Card interactions
-document.querySelectorAll('.accommodation-card').forEach(card => {
-    card.addEventListener('mouseenter', function() {
-        this.style.transform = 'translateY(-8px)';
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    // Add smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
     });
     
-    card.addEventListener('mouseleave', function() {
-        this.style.transform = 'translateY(0)';
-    });
+    // Initialize chatbot toggle
+    initializeChatbot();
+    
+    // Add keyboard navigation support
+    addKeyboardNavigation();
+    
+    // Add loading animation to cards
+    animateCards();
 });
 
-// View Details button functionality
-document.querySelectorAll('.btn-primary').forEach(btn => {
-    if (btn.textContent.includes('View Details')) {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const card = this.closest('.accommodation-card');
-            const title = card.querySelector('.card-title').textContent;
-            
-            // In a real app, this would navigate to a details page
-            showNotification(`Loading details for ${title}...`, 'info');
-            
-            // Simulate navigation delay
-            setTimeout(() => {
-                console.log('Navigate to details page for:', title);
-                // window.location.href = `/accommodation/${title}`;
-            }, 1000);
+// Chatbot functionality
+function initializeChatbot() {
+    const chatbotIcon = document.querySelector('.chatbot-icon');
+    const chatbotWindow = document.querySelector('.chatbot-window');
+    
+    if (chatbotIcon && chatbotWindow) {
+        chatbotIcon.addEventListener('click', function() {
+            if (chatbotWindow.style.display === 'none' || !chatbotWindow.style.display) {
+                chatbotWindow.style.display = 'flex';
+                chatbotIcon.style.transform = 'scale(0.9)';
+            } else {
+                chatbotWindow.style.display = 'none';
+                chatbotIcon.style.transform = 'scale(1)';
+            }
+        });
+        
+        // Close chatbot when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.chatbot-container') && chatbotWindow.style.display === 'flex') {
+                chatbotWindow.style.display = 'none';
+                chatbotIcon.style.transform = 'scale(1)';
+            }
         });
     }
-});
+}
+
+// Keyboard navigation support
+function addKeyboardNavigation() {
+    document.addEventListener('keydown', function(e) {
+        // ESC key to close filter panel
+        if (e.key === 'Escape') {
+            const filterContent = document.getElementById('filterContent');
+            if (filterContent && filterContent.classList.contains('expanded')) {
+                toggleFilters();
+            }
+            
+            // Also close chatbot
+            const chatbotWindow = document.querySelector('.chatbot-window');
+            if (chatbotWindow && chatbotWindow.style.display === 'flex') {
+                chatbotWindow.style.display = 'none';
+                document.querySelector('.chatbot-icon').style.transform = 'scale(1)';
+            }
+        }
+        
+        // Enter key on filter header to toggle
+        if (e.key === 'Enter' && e.target.closest('.filter-header')) {
+            toggleFilters();
+        }
+    });
+}
+
+// Animate cards on scroll
+function animateCards() {
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('fade-in');
+            }
+        });
+    }, {
+        threshold: 0.1
+    });
+    
+    document.querySelectorAll('.accommodation-card').forEach(card => {
+        observer.observe(card);
+    });
+}
+
+// Utility functions for future backend integration
+function sendSearchRequest(searchParams) {
+    // Example function for API integration
+    console.log('Sending search request with:', searchParams);
+    
+    // Example fetch request (uncomment when backend is ready)
+    /*
+    fetch('/api/search-accommodations', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(searchParams)
+    })
+    .then(response => response.json())
+    .then(data => {
+        displaySearchResults(data);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showErrorMessage('Search failed. Please try again.');
+    });
+    */
+}
+
+function displaySearchResults(results) {
+    // Function to display search results from backend
+    const resultsGrid = document.getElementById('resultsGrid');
+    const resultsCounter = document.getElementById('resultsCounter');
+    
+    if (results.length === 0) {
+        resultsGrid.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-search"></i>
+                <h3>No accommodations found</h3>
+                <p>Try adjusting your search criteria</p>
+            </div>
+        `;
+        resultsCounter.textContent = 'No results found';
+    } else {
+        resultsCounter.textContent = `Showing ${results.length} accommodation${results.length !== 1 ? 's' : ''}`;
+        // Render results...
+    }
+}
+
+function showErrorMessage(message) {
+    // Show error messages to user
+    const resultsGrid = document.getElementById('resultsGrid');
+    resultsGrid.innerHTML = `
+        <div class="empty-state">
+            <i class="fas fa-exclamation-triangle" style="color: var(--accent);"></i>
+            <h3>Error</h3>
+            <p>${message}</p>
+        </div>
+    `;
+}
+
+// Export functions for use in other scripts if needed
+window.VUTAccommodation = {
+    toggleFilters,
+    clearFilters,
+    performHeroSearch,
+    sendSearchRequest,
+    displaySearchResults
+};
